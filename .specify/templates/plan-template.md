@@ -64,9 +64,8 @@ src/
 └── lib/
 
 tests/
-├── contract/
-├── integration/
-└── unit/
+├── components/    # Component tests (Vitest + Testing Library)
+└── e2e/           # E2E tests (Playwright)
 
 # [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
 backend/
