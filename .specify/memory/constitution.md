@@ -59,6 +59,11 @@ All testing MUST be done exclusively with Playwright end-to-end tests against th
 - Tests MUST listen to `page.on('console')` and `page.on('pageerror')` events
 - Console errors MUST be printed immediately when they occur, not just on test failure
 - This ensures application bugs (like missing context providers) are immediately visible
+- **All console errors MUST cause the test to fail** - a successful test MUST have zero console errors
+- Tests MUST collect console errors and assert that the error list is empty at test completion
+- **No exceptions**: warnings may be logged but ALL errors (including network errors like 404/500) are test failures
+- **No filtering of error types**: HTTP errors (4xx/5xx) indicate test design problems that must be fixed, not filtered
+- When tests fail due to console errors, AI agents MUST apply Root Cause Tracing to fix the underlying issue
 
 **Configuration**
 - Playwright MUST only include the `chromium` project (no Firefox/WebKit)
@@ -71,7 +76,37 @@ All testing MUST be done exclusively with Playwright end-to-end tests against th
 - New routes/interactions MUST have corresponding E2E tests
 - No flaky tests allowed - tests MUST be deterministic
 
-### II. API-First Contract & Type-Safe Client
+### II. Root Cause Tracing (Debugging Discipline)
+
+When problems occur during development, root cause analysis MUST be performed before implementing fixes:
+- Problems MUST be traced backward through the call chain to find the original trigger
+- Symptoms MUST be distinguished from root causes
+- Fixes MUST address the source of the problem, NOT work around symptoms
+- Test cases MUST NOT be removed or weakened to make tests pass
+- Debuggers and logging MUST be used to understand control flow
+- Multiple potential causes MUST be systematically eliminated
+- Documentation MUST be updated to prevent similar issues
+- Root cause MUST be verified through testing before closing the issue
+
+**Rationale**: Superficial fixes create technical debt and hide underlying architectural problems. Root cause analysis ensures problems are solved at their source, preventing recurrence and maintaining system integrity. This discipline transforms debugging from firefighting into systematic problem-solving that improves overall code quality.
+
+**Debugging Process**:
+1. **Reproduce**: Create reliable reproduction case
+2. **Observe**: Gather evidence through logs, debugger, tests
+3. **Hypothesize**: Form theories about root cause
+4. **Test**: Design experiments to validate/invalidate hypotheses
+5. **Fix**: Implement fix addressing root cause
+6. **Verify**: Ensure fix works and doesn't break existing functionality
+7. **Document**: Update docs/tests to prevent regression
+
+**AI Implementation Requirement**:
+- AI agents MUST perform root cause analysis before implementing fixes
+- AI agents MUST NOT implement superficial workarounds
+- AI agents MUST document the root cause analysis process
+- AI agents MUST update tests to prevent regression of root causes
+
+
+### III. API-First Contract & Type-Safe Client
 
 The backend API is the product. The frontend MUST treat the API as the single source of truth, with full type safety from contract to component.
 
@@ -105,7 +140,7 @@ protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto \
   ./backend/api/proto/[PROJECT]/v1/*.proto
 ```
 
-### III. Component-Driven UI
+### IV. Component-Driven UI
 
 Build UI as a composition of reusable, isolated components.
 
@@ -115,7 +150,7 @@ Build UI as a composition of reusable, isolated components.
 - Each component MUST have a single responsibility
 - Prefer composition over prop drilling; use context sparingly
 
-### IV. Query-Centric Data
+### V. Query-Centric Data
 
 Use a query library (e.g., TanStack Query) as the data layer.
 
@@ -126,7 +161,7 @@ Use a query library (e.g., TanStack Query) as the data layer.
 - Avoid global state; prefer server state via query cache
 - Minimal client state; use React state for UI-only concerns
 
-### V. Simplicity
+### VI. Simplicity
 
 Start simple. Add complexity only when proven necessary.
 
