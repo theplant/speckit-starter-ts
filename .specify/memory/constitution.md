@@ -1,26 +1,81 @@
 <!--
 Sync Impact Report:
-- Version change: 1.3.0 → 1.4.0
+- Version change: 1.4.0 → 1.5.0
 - Modified principles:
-  - III. Component-Driven UI: Added MANDATORY shadcn/ui requirement
-  - V. Test-First: Replaced integration tests with component tests
-  - VI. Integration Testing: REMOVED (backend tests API contracts)
-- Added sections:
-  - Component Testing Requirements (under V. Test-First)
-- Removed sections:
-  - VI. Integration Testing (entire section removed)
-- Templates requiring updates: ✅ tasks-template.md, ✅ plan-template.md
-- Follow-up TODOs: Remove tests/integration/ directory and MSW mocks
+  - V. E2E Testing Discipline → I. E2E Testing Discipline (moved to first position)
+  - I. API-First Contract + II. Type-Safe Client → II. API-First Contract & Type-Safe Client (merged)
+  - III. Component-Driven UI → III. Component-Driven UI (renumbered)
+  - IV. Query-Centric Data → IV. Query-Centric Data (renumbered)
+  - VII. Simplicity → V. Simplicity (renumbered)
+- Added sections: None
+- Removed sections: None (Type-Safe Client merged into API-First Contract)
+- Templates requiring updates: ✅ plan-template.md, ✅ spec-template.md, ✅ tasks-template.md (no changes needed)
+- Follow-up TODOs: None
 -->
 
 # Frontend Console Constitution
 
 ## Core Principles
 
-### I. API-First Contract
+### I. E2E Testing Discipline (NON-NEGOTIABLE)
 
-The backend API is the product. The frontend MUST treat the API as the single source of truth.
+All testing MUST be done exclusively with Playwright end-to-end tests against the real backend API.
 
+**Testing Approach**
+- Every feature MUST have corresponding E2E tests before it is considered complete
+- Tests MUST simulate real user behavior through the browser
+- Tests MUST cover the full user journey, not isolated components
+- No unit tests, no integration tests in isolation
+
+**Coverage Requirements**
+- All routes (public, authenticated, error) MUST have E2E test coverage
+- All user interactions (buttons, forms, modals, navigation, CRUD) MUST be tested
+- All loading states and error states MUST be verified
+- Route parameters and query strings MUST be tested for edge cases
+
+**Real Backend Only**
+- Tests MUST run against the real backend API - mocking is strictly prohibited
+- Tests MUST NOT use `page.route()` or any request interception to fake responses
+- If the backend is not running, tests MUST fail clearly
+
+**Test Independence**
+- Tests MUST NOT depend on execution order of other tests
+- Tests MUST clean up any data they create (or use isolated test data)
+- Tests MUST be able to run in parallel without conflicts
+
+**AI-Driven Execution**
+- Tests MUST run non-interactively without waiting for human review
+- The test-fix cycle MUST be autonomous: run tests → read errors → fix code → re-run
+- Playwright MUST use only the `'list'` reporter for clean, parseable AI output
+
+**Error Debugging Protocol**
+- On test failure, capture HTTP request as curl command: `tests/debug/{test-name}-{timestamp}-request.sh`
+- On test failure, capture HTTP response: `tests/debug/{test-name}-{timestamp}-response.txt`
+- Debug files MUST be gitignored but directory structure MUST exist
+
+**Console Error Capture (NON-NEGOTIABLE)**
+- All browser console errors MUST be captured and output during test execution
+- React/JavaScript errors (e.g., context errors, runtime exceptions) MUST be visible in test output
+- Tests MUST listen to `page.on('console')` and `page.on('pageerror')` events
+- Console errors MUST be printed immediately when they occur, not just on test failure
+- This ensures application bugs (like missing context providers) are immediately visible
+
+**Configuration**
+- Playwright MUST only include the `chromium` project (no Firefox/WebKit)
+- Test files MUST be in `tests/e2e/` with naming `{route-or-feature}.spec.ts`
+- Page objects MUST be used for reusable page interactions
+- Test utilities MUST be in `tests/e2e/utils/`
+
+**Quality Gates**
+- All E2E tests MUST pass before merge
+- New routes/interactions MUST have corresponding E2E tests
+- No flaky tests allowed - tests MUST be deterministic
+
+### II. API-First Contract & Type-Safe Client
+
+The backend API is the product. The frontend MUST treat the API as the single source of truth, with full type safety from contract to component.
+
+**API Contract Rules**
 - Frontend MUST NOT implement business logic that belongs in the backend
 - All data mutations MUST go through API endpoints
 - Frontend MUST handle API errors gracefully with user-friendly messages
@@ -28,10 +83,7 @@ The backend API is the product. The frontend MUST treat the API as the single so
 - Use `Content-Type: application/json` for all API communication (protojson encoding)
 - All endpoints versioned under `/api/v1/`
 
-### II. Type-Safe Client
-
-All API communication MUST be fully typed from contract to component.
-
+**Type Safety Requirements**
 - Generate TypeScript types from backend protobuf using `protoc-gen-ts` (ts-proto)
 - Types MUST be generated BEFORE any implementation begins
 - Generated types live in `src/api/generated/` directory
@@ -74,55 +126,7 @@ Use a query library (e.g., TanStack Query) as the data layer.
 - Avoid global state; prefer server state via query cache
 - Minimal client state; use React state for UI-only concerns
 
-### V. Test-First (NON-NEGOTIABLE)
-
-Tests MUST be written before implementation. This is a BLOCKING requirement.
-
-**Implementation is BLOCKED until:**
-1. Component tests exist and FAIL (red phase)
-2. E2E tests exist and FAIL (red phase)
-3. Generated types from protobuf are available
-
-**Test-First Workflow:**
-- Red-Green-Refactor cycle strictly enforced
-- Tests MUST fail before implementation begins
-- Each user story MUST have acceptance tests defined upfront
-- NO unit tests; NO API integration tests (backend tests its own contracts)
-- Component tests for every UI component
-- E2E tests for all user journeys with real backend
-
-**Component Test Requirements:**
-- EVERY component MUST have a corresponding test file
-- Test all rendering states (loading, error, success, empty)
-- Test user interactions (clicks, form inputs, keyboard)
-- Test conditional rendering and edge cases
-- Mock query hooks at the hook level, NOT HTTP requests
-- Use Testing Library queries (getByRole, getByText) for accessibility
-- NO snapshot testing
-
-**Component Test Structure:**
-```typescript
-// tests/components/UserCard.test.tsx
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { UserCard } from '@/components/UserCard'
-
-describe('UserCard', () => {
-  it('renders user name', () => { ... })
-  it('shows loading state', () => { ... })
-  it('handles click action', () => { ... })
-})
-```
-
-**E2E Test Requirements (per user journey):**
-- Test the complete user journey from start to finish
-- Test against REAL backend (test environment)
-- Test navigation between pages
-- Test form submissions and validations
-- Test error recovery flows
-- ALL user journeys MUST have E2E coverage
-
-### VII. Simplicity
+### V. Simplicity
 
 Start simple. Add complexity only when proven necessary.
 
@@ -202,16 +206,8 @@ src/
 ├── pages/         # Route-level components
 ├── lib/           # Utilities and helpers
 └── tests/
-    ├── components/    # Component tests (Vitest + Testing Library)
     └── e2e/           # End-to-end user journey tests (Playwright)
 
-backend/                   # Symlinked Go backend
-├── api/
-│   ├── proto/[PROJECT]/v1/       # Protobuf definitions (source of truth)
-├── handlers/
-│   ├── routes.go          # All API endpoint definitions
-│   └── error_codes.go     # Structured error responses
-└── Makefile               # proto, test, run, migrate commands
 ```
 
 ### Quality Gates
@@ -232,22 +228,7 @@ backend/                   # Symlinked Go backend
 - **Project Scope**: Include `project_id` header for all project-scoped calls
 - **Health Check**: `GET /health` returns `{"status":"ok"}`
 
-### Error Response Format
 
-All errors return structured JSON:
-```json
-{
-  "code": "ERROR_CODE",
-  "message": "Human-readable message"
-}
-```
-
-Common error codes:
-- `INVALID_REQUEST` (400)
-- `MISSING_PROJECT_ID` (400)
-- `NOT_FOUND` (404)
-- `DUPLICATE` (409)
-- `INTERNAL_ERROR` (500)
 
 
 
@@ -271,4 +252,4 @@ This constitution supersedes all other development practices for frontend projec
 - MINOR: New principle or significant guidance addition
 - PATCH: Clarifications and minor refinements
 
-**Version**: 1.4.0 | **Ratified**: 2025-12-09 | **Last Amended**: 2025-12-09
+**Version**: 1.5.0 | **Ratified**: 2025-12-09 | **Last Amended**: 2025-12-11
