@@ -76,6 +76,15 @@ All testing MUST be done exclusively with Playwright end-to-end tests against th
 - New routes/interactions MUST have corresponding E2E tests
 - No flaky tests allowed - tests MUST be deterministic
 
+**Test Description Alignment (NON-NEGOTIABLE)**
+- Test expectations MUST directly verify what the test description claims to test
+- If a test is named "should display activities", it MUST assert that activities are visible, not just a header
+- Test descriptions are contracts - the assertions MUST fulfill that contract
+- Avoid proxy assertions: testing a header exists does NOT prove the feature works
+- Each test MUST have at least one assertion that directly validates the described behavior
+- Example violation: `test('should display activities')` with only `expect(header).toBeVisible()` - this tests the header, not activities
+- Example correct: `test('should display activities')` with `expect(activityItems.count()).toBeGreaterThan(0)`
+
 ### II. Root Cause Tracing (Debugging Discipline)
 
 When problems occur during development, root cause analysis MUST be performed before implementing fixes:
