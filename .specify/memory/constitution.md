@@ -85,6 +85,16 @@ All testing MUST be done exclusively with Playwright end-to-end tests against th
 - Example violation: `test('should display activities')` with only `expect(header).toBeVisible()` - this tests the header, not activities
 - Example correct: `test('should display activities')` with `expect(activityItems.count()).toBeGreaterThan(0)`
 
+**API Request/Response Transparency (NON-NEGOTIABLE)**
+- All backend API calls MUST be logged with full request and response details during test execution
+- Tests MUST listen to `page.on('request')` and `page.on('response')` events for API endpoints
+- Request logs MUST include: method, URL, headers, and body (for POST/PUT/PATCH)
+- Response logs MUST include: status code, URL, and response body
+- Logs MUST be output immediately when requests/responses occur for real-time visibility
+- This enables AI agents to quickly understand API interactions when debugging test failures
+- API logs MUST be attached to test reports for failed tests
+- Only API calls (e.g., `/api/`) should be logged, not static assets
+
 ### II. Root Cause Tracing (Debugging Discipline)
 
 When problems occur during development, root cause analysis MUST be performed before implementing fixes:
